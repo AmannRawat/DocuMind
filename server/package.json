@@ -1,0 +1,35 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Backend server for PDF RAG Chat",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "dev:worker": "nodemon worker.js",
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.8.1",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.8.1",
+  "type": "module",
+  "dependencies": {
+    "bullmq": "^6.3.11",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "ioredis": "^6.0.0",
+    "multer": "^2.4.0",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "@types/multer": "^2.3.0",
+    "@types/node": "^26.6.4"
+  }
+}
