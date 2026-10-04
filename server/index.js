@@ -3,8 +3,16 @@ import cors from 'cors'
 import multer from 'multer'
 import { Queue } from 'bullmq'
 import path from 'path'
+import { QdrantVectorStore } from '@langchain/qdrant'
+import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai'
+import 'dotenv/config'
 
 const app = express();
+
+const embeddingModel = new GoogleGenerativeAIEmbeddings({
+    model: 'gemini-embedding-2',
+    apiKey: process.env.GEMINI_API_KEY,
+})
 
 const queue = new Queue("File-upload-queue", {
     connection: {
@@ -13,15 +21,6 @@ const queue = new Queue("File-upload-queue", {
         maxRetriesPerRequest: null
     }
 })
-
-   const qdrant = await QdrantVectorStore.fromDocuments(
-            splitChunks,
-            embeddingModel,
-            {
-                url: "http://localhost:6333",
-                collectionName: "pdf_docs",
-            }
-        )
 
 const storage = multer.diskStorage({
     destination: (req, res, cb) => {
@@ -55,8 +54,34 @@ app.post('/upload/pdf', upload.single('pdf'), async (req, res) => {
     })
 })
 
-app.get('/get', (req, res) => {
-    const userQuery="what is this document about?";
+app.get('/chat', async (req, res) => {
+    try {
+        const userQuery = 'what is this document about?'
+
+        const vectorStore = await QdrantVectorStore.fromExistingCollection(
+            embeddingModel,
+            {
+                url: 'http://localhost:6333',
+                collectionName: 'pdf_docs',
+            }
+        )
+
+        const docs = await vectorStore.similaritySearch(userQuery, 5)
+
+        console.log('Retrieved documents:', docs)
+
+        return res.json({
+            status: 'success',
+            results: docs,
+        })
+    } catch (error) {
+        console.error('Retrieval error:', error)
+
+        return res.status(500).json({
+            status: 'error',
+            message: 'Failed to retrieve documents',
+        })
+    }
 })
 
 app.listen(8001, () => {
