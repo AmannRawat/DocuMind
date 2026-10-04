@@ -5,9 +5,12 @@ import { Queue } from 'bullmq'
 import path from 'path'
 import { QdrantVectorStore } from '@langchain/qdrant'
 import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai'
+import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config'
 
 const app = express();
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const embeddingModel = new GoogleGenerativeAIEmbeddings({
     model: 'gemini-embedding-2',
@@ -68,11 +71,29 @@ app.get('/chat', async (req, res) => {
 
         const docs = await vectorStore.similaritySearch(userQuery, 5)
 
+       const SYSTEM_PROMPT = `
+You are a helpful AI assistant. Use the retrieved context to answer the question.
+
+Question:
+${userQuery}
+
+Retrieved context:
+${JSON.stringify(docs)}
+
+If the answer is not in the context, say so.
+Do not provide any additional information.
+`
+
+        const response = await ai.models.generateContent({
+            model: "gemini-3.5-flash-lite",
+            contents: SYSTEM_PROMPT,
+        });
+
         console.log('Retrieved documents:', docs)
 
         return res.json({
             status: 'success',
-            results: docs,
+            results: response.text,
         })
     } catch (error) {
         console.error('Retrieval error:', error)
