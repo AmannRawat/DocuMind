@@ -2,16 +2,26 @@ import express from 'express'
 import cors from 'cors'
 import multer from 'multer'
 import { Queue } from 'bullmq'
+import path from 'path'
 
 const app = express();
 
-const queue = new Queue("File-upload-queue",{
-    connection:{
+const queue = new Queue("File-upload-queue", {
+    connection: {
         host: 'localhost',
         port: 6379,
         maxRetriesPerRequest: null
     }
 })
+
+   const qdrant = await QdrantVectorStore.fromDocuments(
+            splitChunks,
+            embeddingModel,
+            {
+                url: "http://localhost:6333",
+                collectionName: "pdf_docs",
+            }
+        )
 
 const storage = multer.diskStorage({
     destination: (req, res, cb) => {
@@ -33,15 +43,20 @@ app.get('/', (req, res) => {
 
 app.post('/upload/pdf', upload.single('pdf'), async (req, res) => {
     console.log('Received file:', req.file)
+
     await queue.add('file-ready', JSON.stringify({
         filename: req.file.originalname,
-        path: req.file.path,
+        path: path.resolve(req.file.path),
     }))
     return res.json({
         status: 'success',
         message: 'PDF uploaded successfully',
         file: req.file
     })
+})
+
+app.get('/get', (req, res) => {
+    const userQuery="what is this document about?";
 })
 
 app.listen(8001, () => {

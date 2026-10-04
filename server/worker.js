@@ -25,7 +25,7 @@ const worker = new Worker(
 
 
         //Load PDF
-        const loader = new PDFLoader(data.Path)
+        const loader = new PDFLoader(data.path)
         const docs = await loader.load()
         console.log(`Loaded ${docs.length} pages`)
 
@@ -47,7 +47,7 @@ const worker = new Worker(
             embeddingModel,
             {
                 url: "http://localhost:6333",
-                collectionName: "pdf_documents",
+                collectionName: "pdf_docs",
             }
         )
 
